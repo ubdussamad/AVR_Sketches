@@ -11,12 +11,15 @@
 
 
 #include <ESP8266WiFi.h>
+#include <string>
+
+#define TID 1000
 
 #ifndef STASSID
 #define STASSID "Galaxy A50"
 #define STAPSK  "zebrafamily"
 #endif
-#define GPIO_NUM 3
+#define GPIO_NUM 5
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
@@ -24,7 +27,7 @@ const char* password = STAPSK;
 // specify the port to listen on as an argument
 WiFiServer server(80);
 
-int GPIOS[8] = {13 , 4 , 5 }; //, 10 , 9}; 
+int GPIOS[8] = {14 , 12 , 13 , 4 , 5 }; //, 10 , 9}; 
 void setup() {
 
   // We begin at 115200 Bits/Sec Data/Baud rate.
@@ -34,7 +37,7 @@ void setup() {
   //    We have GPIO -> 13 , 12 , 14 , 16 , 4 , 5 , 10 , 9
   
 
-  // Loop over GPIO pin array and keep setting pimodes
+  // Loop over GPIO pin array and keep setting pinmodes
   for (int i=0;i<GPIO_NUM;i++) {
     pinMode( GPIOS[i] , OUTPUT);
     digitalWrite( GPIOS[i] , 0);
@@ -88,8 +91,8 @@ void loop() {
   Serial.println(req);
 
   // Match the request
-  if (req.indexOf(F("/hi")) != -1) {
-    Serial.println(F("\nHello there, have a good day! :)"));  
+  if (req.indexOf(F("/stat")) != -1) {
+    Serial.println(F("\nEMDSSYS - AUTOMATON-X1\nTID:: "+TID));  
   }
   
   else if (req.indexOf(F("/gpio")) != -1) {
@@ -145,21 +148,31 @@ void loop() {
   "</head>"
   "<body style=\"background: #F2F6DF;\">"
   "<br/>"
-  "<h4 style=\"color:rgb(100,100,100);\" align=\"center\">EMDSUBSYSTEMS</h4>"
-  "<h6 style=\"color: #0D5EA5; \" align=\"center\">AutomatonX1 - Automation Series Product Routine </h6>"
-  "<h10 align=\"center\">Author: ubdussamad <ubdussamad@gmail.com> </h10>"
-  "<h10 align=\"center\">Ref: 27 NOV 2019 </h10>"
-  "<h10 align=\"center\">Coyright 2019 EMDSUBSYSTEMS </h10>"
+  "<h3 style=\"color:rgb(100,100,100);\" align=\"center\">EMDSUBSYSTEMS</h3>"
+  "<h4 style=\"color: #0D5EA5; \" align=\"center\">AutomatonX1 - Automation Series Product Routine </h4>"
+  "<h5 align=\"center\">Author: ubdussamad <ubdussamad@gmail.com> </h5>"
+  "<h5 align=\"center\">Ref: 27 NOV 2019 </h5>"
+  "<h5 align=\"center\"> © Copyright 2019 EMDSUBSYSTEMS </h5>"
+  "<div align=\"center\">"
+  "<br/> <br/> <h5 align=\"center\"> Control Relay # </h4>"
   ));
+  String IP = IpAddress2String(WiFi.localIP());
+
+  for (int i=0;i<GPIO_NUM;i++) {
+  char buff[10000];
+  sprintf(buff,
+  "<br/><a href='http://%s/gpio/%d1' class=\"btn btn-primary\" align=\"center\" role=\"button\" > ON-%d </a><a href='http://%s/gpio/%d0' class=\"btn btn-danger\" align=\"center\" role=\"button\" > OFF-%d </a>"
+  , IP.c_str() , GPIOS[i] , GPIOS[i] , IP.c_str() , GPIOS[i] , GPIOS[i]);
+  client.print(buff);
+  
+  }
+  
   client.print(F(
-  "<br/> <br/> <h8 align='center'> Control Relay # </h6>"
-  "<br/><a href='http://"));
-  client.print(WiFi.localIP());
-  client.print(F(
-  "/gpio/41' class=\"btn btn-primary\" role=\"button\" > ON-4 </a> "
-  "<a href='http://"));
-  client.print(WiFi.localIP());
-  client.print(F("/gpio/40' class=\"btn btn-danger\" role=\"button\" > OFF-4 </a>"
+  "</div>"
+  "<br/><br/>"
+  "<footer style=\"background: rgb(100,100,100);color:white;\">"
+  "<h10 align=\"center\"> © Copyright 2019 EMDSUBSYSTEMS </h10>"
+  "</footer>"
   "</body>"
   "</html>"));
 
@@ -167,4 +180,12 @@ void loop() {
   // when the function returns and 'client' object is destroyed (out-of-scope)
   // flush = ensure written data are received by the other side
   Serial.println(F("Disconnecting from client"));
+}
+
+String IpAddress2String(const IPAddress& ipAddress)
+{
+  return String(ipAddress[0]) + String(".") +\
+  String(ipAddress[1]) + String(".") +\
+  String(ipAddress[2]) + String(".") +\
+  String(ipAddress[3])  ;
 }
