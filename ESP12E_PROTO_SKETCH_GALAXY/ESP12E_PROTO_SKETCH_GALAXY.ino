@@ -14,12 +14,14 @@
 #include <string>
 
 #define TID 1000
+#define MAX_RECONNECTION_WAIT_TIME 20 // Multiple of 0.5 seconds
+#define GPIO_NUM 5
 
 #ifndef STASSID
 #define STASSID "Galaxy A50"
 #define STAPSK  "zebrafamily"
 #endif
-#define GPIO_NUM 5
+
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
@@ -76,6 +78,30 @@ void setup() {
 
 void loop() {
   // Check if a client has connected
+  
+  if (WiFi.status() != WL_CONNECTED) {
+      delay(2000);
+      int time_delta = 0;
+      Serial.print(F("\nRe-Connecting to Host AP named: "));
+      Serial.println(ssid);
+      Serial.print(F("\nPlease Wait"));
+    
+      //WiFi.mode(WIFI_STA);
+      WiFi.begin(ssid, password);
+      while (WiFi.status() != WL_CONNECTED) {
+        if (time_delta++ > MAX_RECONNECTION_WAIT_TIME ) { // About 10 secs
+          Serial.print(F("\n\n||||||||||||||RESTARTING MODULE|||||||||||||||||\n\n"));
+          ESP.restart();
+          break;
+        }
+        delay(500);
+        Serial.print(F("."));
+      }
+      Serial.println();
+      Serial.println(F("\nStation Successfully connected to AP."));
+
+  }
+  
   WiFiClient client = server.available();
   if (!client) {
     return;
@@ -92,26 +118,21 @@ void loop() {
 
   // Match the request
   if (req.indexOf(F("/stat")) != -1) {
-    Serial.println(F("\nEMDSSYS - AUTOMATON-X1\nTID:: "+TID));  
+    Serial.println("\nEMDSSYS - AUTOMATON-X1\nTID:: "+TID);  
   }
   
   else if (req.indexOf(F("/gpio")) != -1) {
-      //    We have GPIO -> 13 , 12 , 14 , 16 , 4 , 5 , 10 , 9
       Serial.println(F("\nGPIO Command"));
       for (int i=0; i<GPIO_NUM; i++) {
         if (req.indexOf( "/"+String(GPIOS[i])+"0" ) !=-1) {
           // Turn the line off
           Serial.println( " Setting GPIO: " + String(GPIOS[i]) + "LOW" );
-          //Serial.println(String(GPIOS[i]));
-          //Serial.println(F(" LOW. \n"));
           digitalWrite( GPIOS[i] , 0);
           
         }
         else if (req.indexOf( "/"+String(GPIOS[i])+"1" ) !=-1) {
           // Turn the line off
           Serial.println( " Setting GPIO: " + String(GPIOS[i]) + "HIGH" );
-          //Serial.println(String(GPIOS[i]));
-          //Serial.println(F(" HIGH. \n"));
           digitalWrite( GPIOS[i] , 1);
         }
       }
@@ -149,15 +170,16 @@ void loop() {
   "<body style=\"background: #F2F6DF;\">"
   "<br/>"
   "<h3 style=\"color:rgb(100,100,100);\" align=\"center\">EMDSUBSYSTEMS</h3>"
-  "<h4 style=\"color: #0D5EA5; \" align=\"center\">AutomatonX1 - Automation Series Product Routine </h4>"
+  "<h4 style=\"color: #0D5EA5; \" align=\"center\">AutomatonX1</h4>"
+  "<h5 style=\"color: #0D5EA5; \" align=\"center\">Automation Series Product Line</h5>"
   "<h5 align=\"center\">Author: ubdussamad <ubdussamad@gmail.com> </h5>"
   "<h5 align=\"center\">Ref: 27 NOV 2019 </h5>"
-  "<h5 align=\"center\"> © Copyright 2019 EMDSUBSYSTEMS </h5>"
   "<div align=\"center\">"
   "<br/> <br/> <h5 align=\"center\"> Control Relay # </h4>"
   ));
-  String IP = IpAddress2String(WiFi.localIP());
 
+  
+  String IP = IpAddress2String(WiFi.localIP());
   for (int i=0;i<GPIO_NUM;i++) {
   char buff[10000];
   sprintf(buff,
