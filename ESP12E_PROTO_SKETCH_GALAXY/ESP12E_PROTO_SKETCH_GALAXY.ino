@@ -115,10 +115,22 @@ void loop() {
   Serial.println(F("_____________________"));
   Serial.println(F("Request Type: "));
   Serial.println(req);
-
   // Match the request
   if (req.indexOf(F("/stat")) != -1) {
-    Serial.println("\nEMDSSYS - AUTOMATON-X1\nTID:: "+TID);  
+    Serial.println("\nEMD Subsystems - AUTOMATON-X1\nPID: AX1\nDevice UID:");
+    Serial.println(TID);
+    Serial.println("\n");
+  }
+
+  else if (req.indexOf(F("/config/update_credentials/")) != -1) {
+    Serial.println("New Credentials Stored, the smart switch will try to connect\n"
+                  "to this new WifiRouter (AP) first then if it fails then it'll\n"
+                  "try to connect to the wifi with last credentials.= if the new one\n"
+                  "fails to connect, so that you dont loose access if you make a mistake.\n"
+                  "Then you can try updating the credentials again. If you fail to prvide\n"
+                  "the correct credentials this time then you'll have to contact the serivce\n"
+                  "provider who installed this system in your property.\n");
+    Serial.println(req);
   }
   
   else if (req.indexOf(F("/gpio")) != -1) {
@@ -160,7 +172,7 @@ void loop() {
   client.print(F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n"
   ""
   "<!DOCTYPE HTML>\r\n<html>\r"
-  "<head> <title> EMD SUBSYSTEMS </title>"
+  "<head> <title> Automatonx1 - EMD Subsystems </title>"
   "<meta charset=\"utf-8\">"
   "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
   "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css\">"
@@ -169,7 +181,7 @@ void loop() {
   "</head>"
   "<body style=\"background: #F2F6DF;\">"
   "<br/>"
-  "<h3 style=\"color:rgb(100,100,100);\" align=\"center\">EMDSUBSYSTEMS</h3>"
+  "<h3 style=\"color:rgb(100,100,100);\" align=\"center\">EMD Subsystems</h3>"
   "<h4 style=\"color: #0D5EA5; \" align=\"center\">AutomatonX1</h4>"
   "<h5 style=\"color: #0D5EA5; \" align=\"center\">Automation Series Product Line</h5>"
   "<h5 align=\"center\">Author: ubdussamad <ubdussamad@gmail.com> </h5>"
@@ -193,7 +205,7 @@ void loop() {
   "</div>"
   "<br/><br/>"
   "<footer style=\"background: rgb(100,100,100);color:white;\">"
-  "<h10 align=\"center\"> © Copyright 2019 EMDSUBSYSTEMS </h10>"
+  "<h10 align=\"center\"> © Copyright 2019 EMD Subsystems </h10>"
   "</footer>"
   "</body>"
   "</html>"));
