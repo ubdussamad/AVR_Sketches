@@ -27,7 +27,7 @@
 #define CUSTOM_IP_TRIAL_TIMEOUT 30000//3000000 // Multiple of milliseconds ~5Mins
 
 #ifndef STASSID
-#define STASSID "Galaxy A501"
+#define STASSID "Galaxy A50"
 #define STAPSK  "zebrafamily"
 #endif
 
@@ -68,7 +68,7 @@ void setup() {
     // Meaning this is the first run for this product then use the default value stored in the variables
 
     //Format File System
-    if(!SPIFFS.format()) { Serial.println("Filesystem format Failed.");}
+    //if(!SPIFFS.format()) { Serial.println("Filesystem format Failed.");}
 
     //Write the config file with the constant data
     File f = SPIFFS.open( APSettingsFile, "w");
@@ -123,6 +123,7 @@ void setup() {
     }
   ssid = Credentials[0][0];
   password = Credentials[0][1];
+  Serial.println("Sucessfully read data from internaly sotred file.");
   
   }
 
@@ -250,9 +251,9 @@ void loop() {
     pageRequest = 'c'; // Change page to config 
     
   }
-  else if ( req.length() < 13 ) {
+  else if (req.indexOf(F(".ico")) != -1) {
     // Blank IP Request
-    pageRequest = 'h';
+    //pageRequest = 'h';
   }
 
   else if (req.indexOf(F("/config/set_credentials")) != -1) {
@@ -260,7 +261,7 @@ void loop() {
     // If the password/username contains white spaces? it'll be here as %20
     // GET /config/set_credentials/Galaxy%20A50/something%20cool HTTP/1.1
     // Update Current Wifi Settings
-    pageRequest = 'c'; // Change page to config;
+    pageRequest = 'x'; // Change page to config;
     
     int psk_begin_index = req.lastIndexOf('/', req.lastIndexOf('/')-1 );
     int psk_end_index = req.lastIndexOf('H')-1;
@@ -269,10 +270,28 @@ void loop() {
     String n_psk = req.substring(psk_begin_index+1 , psk_end_index);
     n_ssid.replace("%20", " ");
     n_psk.replace("%20", " ");
-    Serial.print("New AP Credentials!\n SSID: ");
-    Serial.println(n_ssid);
-    Serial.print("PSK: ");
-    Serial.println(n_psk);
+
+    if ( n_ssid.indexOf("set_credentials") != -1){
+      pageRequest='h';
+    }
+    else {
+      Serial.print("New AP Credentials!\n SSID: ");
+      Serial.println(n_ssid);
+      Serial.print("PSK: ");
+      Serial.println(n_psk);
+      File f = SPIFFS.open( APSettingsFile, "w");
+      
+      if (!f) {Serial.println("\nSettings Config File Creation Failed.");} // TODO: Write a Suite to recover from this. Maybe Restart??
+      
+      else {
+          f.print( n_ssid + "%20" + n_psk + "%21");
+          f.close();  //Close file
+          Serial.println("Restarting Switch with new credentials, please wait....");
+          delay(5000);
+          ESP.restart();
+      }
+      
+    }
     
     
     
@@ -281,11 +300,11 @@ void loop() {
   else {
     //Serial.println(F("Invalid Request: "));
     //Serial.println(F(req));
-    for (int i=0;i<GPIO_NUM;i++){
-      int parity = digitalRead(GPIOS[i]);
-      digitalWrite(GPIOS[i], parity);
-    }
-      pageRequest = 'c';
+//    for (int i=0;i<GPIO_NUM;i++){
+//      int parity = digitalRead(GPIOS[i]);
+//      digitalWrite(GPIOS[i], parity);
+//    }
+      pageRequest = 'h';
   }
 
   // read/ignore the rest of the request
@@ -349,8 +368,43 @@ void loop() {
 
   else if ( pageRequest == 'c' ) { // Config Page
     // Print the config page stuf to the thing, ok??
-    int i = 2;
-    client.print(F("HI"));
+      File config_page = SPIFFS.open("/settings.html", "r");
+     
+      if (!config_page) {
+        Serial.println("Failed to open settings.html Page");
+      }
+
+      else {
+        Serial.println("Success in readnig data from file.");
+        while ( config_page.available()) {
+       
+          client.print( (char) config_page.read());
+        }
+
+        config_page.close();
+      }
+     
+  }
+
+  else if ( pageRequest == 'x') { //Post config page
+        // Print the config page stuf to the thing, ok??
+      File config_page = SPIFFS.open("/ack.html", "r");
+     
+      if (!config_page) {
+        Serial.println("Failed to open settings.html Page");
+      }
+
+      else {
+        Serial.println("Success in readnig data from file.");
+       
+        while ( config_page.available()) {
+       
+          client.print( (char) config_page.read());
+        }
+
+        config_page.close();
+      }
+     
   }
 
   // The client will actually be *flushed* then disconnected
