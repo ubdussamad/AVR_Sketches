@@ -41,7 +41,7 @@ String password = STAPSK;
 WiFiServer server(80);
 
 
-int GPIOS[8] = {14 , 12 , 13};// , 4 , 5 };
+int GPIOS[8] = {4 , 5 , 14};// , 12 , 13 };
 
 void setup() {
   
@@ -127,12 +127,27 @@ void setup() {
   
   }
 
-  
+  File relay_states_f = SPIFFS.open( RelayStates, "r");
+  String buff;
+      if (!relay_states_f) {
+        Serial.println("Failed to open Relay States File.");
+      }
+
+      else {
+        Serial.println("Rely Sate Files present.");
+       
+        while ( relay_states_f.available()) {
+       
+           buff += (char) relay_states_f.read();
+        }
+
+        relay_states_f.close();
+      }
   
   // Loop over GPIO pin array and keep setting pinmodes
   for (int i=0;i<GPIO_NUM;i++) {
     pinMode( GPIOS[i] , OUTPUT);
-    digitalWrite( GPIOS[i] , 0);
+    digitalWrite( GPIOS[i] , (buff.length() > 0) ? ((buff[i] == '1') ? 1 : 0) : 0 );
   }
 
   // Connect to WiFi network
@@ -242,7 +257,14 @@ void loop() {
           digitalWrite( GPIOS[i] , 1);
         }
       }
+      register_switch_states(); // Write the new switch states to flash
       pageRequest = 'h';
+  }
+
+  else if (req.indexOf(F("/restart ")) != -1) {
+    Serial.println("Restarting the Switches....");
+    delay(2000);
+    ESP.restart();
   }
   
   else if (req.indexOf(F("/config ")) != -1) {
@@ -287,8 +309,6 @@ void loop() {
           f.print( n_ssid + "%20" + n_psk + "%21");
           f.close();  //Close file
           Serial.println("Restarting Switch with new credentials, please wait....");
-          delay(5000);
-          ESP.restart();
       }
       
     }
@@ -404,7 +424,8 @@ void loop() {
 
         config_page.close();
       }
-     
+     delay(10000);
+     ESP.restart();
   }
 
   // The client will actually be *flushed* then disconnected
@@ -418,4 +439,23 @@ String IpAddress2String(const IPAddress& ipAddress) {
   String(ipAddress[1]) + String(".") +\
   String(ipAddress[2]) + String(".") +\
   String(ipAddress[3])  ;
+}
+
+void register_switch_states() {
+  String buff = "000";
+  
+  for (  int i=0; i < GPIO_NUM ; i++ ) {
+    buff[i] = digitalRead(GPIOS[i]) ? '1' : '0';
+  }
+
+  //Write the config file with the constant data
+  File f = SPIFFS.open( RelayStates , "w");
+    
+  if (!f) {Serial.println("\nWriting Sate chages.");} // TODO: Write a Suite to recover from this. Maybe Restart??
+    
+  else {
+        f.print(buff);
+        f.close();  //Close file
+    }
+  
 }
