@@ -1,0 +1,32 @@
+// Persistance oF Vision Display
+// Ref: 8 Mar 2020
+// Author: Ubdussamad <ubdussamad2gmail.com>
+
+#define GPIO_NUM 5
+
+int GPIOs [GPIO_NUM] = { 4, 10, 12, 13, 14 }; // , 11 , 6 , 8 , 7 , 12 };
+
+void setup() {
+  Serial.begin(115200);
+
+  // Some Greetings
+  Serial.print("Goodey, I am from the Australian Government.");
+  Serial.print("Initializing device....");
+
+  // Initializing GPIO pins as output pins
+  for ( int i=0; i < GPIO_NUM; i++) {
+      pinMode( GPIOs[i] , OUTPUT);
+  }
+
+  // Initializing one GPIO as INPUT for rotation detection.
+  // Rotation speed is detected and timings are adjusted that way.
+  pinMode(INPUT , 11 );
+
+  Serial.print("Initialization Complete, Starting Mainloop.");
+  
+}
+
+
+void loop() {
+     // Routine for looping the Control.
+}
