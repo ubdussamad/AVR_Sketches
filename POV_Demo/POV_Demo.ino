@@ -19,11 +19,13 @@ void setup() {
   // Initializing GPIO pins as output pins
   for ( int i=0; i < GPIO_NUM; i++) {
       pinMode( GPIOs[i] , OUTPUT);
+      delay(100);
+      digitalWrite( GPIOs[i] , HIGH );
   }
 
   // Initializing one GPIO as INPUT for rotation detection.
   // Rotation speed is detected and timings are adjusted that way.
-  //pinMode( 6, INPUT);
+  pinMode( 5, INPUT);
 
   Serial.print("Initialization Complete, Starting Mainloop.");
   
@@ -40,7 +42,7 @@ void loop() {
 unsigned long check_rpm ( void ) {
     // Routine for checking RPM of a wheel
     unsigned long delta;
-    delta = digitalRead(6);
+    delta = digitalRead(5);
     //Serial.println(duration);
     return( delta );
     }
